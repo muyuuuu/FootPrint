@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.3.1/dist/echarts.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+</head>
+
+<body bgcolor="#343233">
+  <!--style中定义视图的长宽尺寸-->
+  <div id="main" style="width: 2000px;height:1200px;"></div>
+  <script type="text/javascript">
+    var myChart = echarts.init(document.getElementById('main'));
+    myChart.showLoading();
+    $.get('https://geo.datav.aliyun.com/areas_v3/bound/100000_full.json', function (geoJson) {
+      myChart.hideLoading();
+      echarts.registerMap('china', geoJson);
+      myChart.setOption(
+        option = {
+          title: {
+            text: '旅行足迹'
+          },
+          geo: {
+            name: '旅行足迹',
+            type: 'map',
+            map: 'china',
+            selectedMode: 'multiple',
+            zoom: 1,
+            roam: true,
+            animation: false,
+            itemStyle: {
+              normal: {
+                borderWidth: 1,             // 省份边界线宽度
+                borderColor: "#2be4f3",     // 省份边界线颜色
+                areaColor: "#343233"        // 省份颜色
+              },
+            },
+            // 点亮的省份
+            regions: [
+              { name: ["河北省"], itemStyle: { normal: { areaColor: "#5aae5c" }, }, },
+              { name: ["湖北省"], itemStyle: { normal: { areaColor: "#5aae5c" }, }, },
+              { name: ["吉林省"], itemStyle: { normal: { areaColor: "#5aae5c" }, }, },
+              { name: ["北京市"], itemStyle: { normal: { areaColor: "#5aae5c" }, }, },
+              { name: ["天津市"], itemStyle: { normal: { areaColor: "#5aae5c" }, }, },
+              { name: ["内蒙古自治区"], itemStyle: { normal: { areaColor: "#5aae5c" }, }, },
+              { name: ["陕西省"], itemStyle: { normal: { areaColor: "#5aae5c" }, }, },
+              { name: ["湖南省"], itemStyle: { normal: { areaColor: "#5aae5c" }, }, },
+              { name: ["江西省"], itemStyle: { normal: { areaColor: "#5aae5c" }, }, },
+              { name: ["安徽省"], itemStyle: { normal: { areaColor: "#5aae5c" }, }, },
+              { name: ["青海省"], itemStyle: { normal: { areaColor: "#5aae5c" }, }, },
+              { name: ["四川省"], itemStyle: { normal: { areaColor: "#5aae5c" }, }, },
+              { name: ["河南省"], itemStyle: { normal: { areaColor: "#5aae5c" }, }, },
+              { name: ["甘肃省"], itemStyle: { normal: { areaColor: "#5aae5c" }, }, },
+              { name: ["河北省"], itemStyle: { normal: { areaColor: "#5aae5c" }, }, },
+            ],
+          },
+          series: {
+            name: '标记点',
+            type: 'scatter',
+            coordinateSystem: 'geo',
+            // 去过的城市，对应的经纬度
+            data: [
+              { name: '北京', value: [116.407387, 39.904179] },
+              { name: '长白山', value: [128.333, 42.026] },
+              { name: '武当山', value: [110.785239, 32.647017] },
+              { name: '保定', value: [115.482331, 38.867657] },
+              { name: '唐山', value: [118.460379, 39.273070] },
+              { name: '天津', value: [117.190182, 39.125596] },
+              { name: '秦皇岛', value: [119.586579, 39.942531] },
+              { name: '乌兰布统', value: [117.54562, 43.26501] },
+              { name: '张家口', value: [115.27993, 40.97519] },
+              { name: '成都', value: [104.04303, 30.64235] },
+              { name: '西宁', value: [101.778916, 36.623178] },
+              { name: '长沙', value: [112.93133, 28.2351] },
+              { name: '南昌', value: [115.892151, 28.676493] },
+              { name: '武功山', value: [114.02951, 27.63063] },
+              { name: '黄山', value: [118.1416, 30.2729] },
+              { name: '洛阳', value: [112.46902, 34.68364] },
+              { name: '敦煌', value: [94.66159, 40.14211] },
+              // { name: '黟县', value: [117.94137, 29.92588] },
+              { name: '西安\n 咸阳', value: [108.94866, 34.22245] },
+              { name: '华山', value: [110.08752, 34.56608] },
+              { name: '延安', value: [110.17196, 36.04732] },
+              { name: '宝鸡', value: [107.90017, 34.37524] },
+              // { name: '咸阳', value: [108.705117, 34.333439] },
+              { name: '九寨沟县', value: [104.231374, 33.279792] },
+              { name: '茶卡镇', value: [98.48196, 36.93471] },
+              { name: '张掖', value: [100.455472, 38.932897] },
+              { name: '格尔木', value: [94.90329, 36.40236] },
+              { name: '衡山', value: [112.86776, 27.23134] },
+            ],
+            symbolSize: 5,
+            label: {
+              formatter: '{b}',
+              show: true,
+              position: 'bottom',
+              color: '#fff', // 标签字体的颜色
+              fontSize: 10,
+              fontWeight: 'bold',
+              fontFamily: 'sans-serif'
+            },
+            itemStyle: {
+              color: "#ffff00", // 圆点的颜色
+              borderWidth: 2, // 边框大小
+              borderColor: "#ffff00", // 圆点边框的样式
+            }
+          },
+        }
+      )
+    })
+
+    myChart.on('click', function (params) {
+      // 在用户点击后控制台打印数据的名称
+      console.log(params);
+    });
+
+  </script>
+</body>
+
+</html>
