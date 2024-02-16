@@ -9,10 +9,30 @@
   <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
 </head>
 
-<body bgcolor="#343233">
+<body id="page">
   <!--style中定义视图的长宽尺寸-->
   <div id="main" style="width: 2000px;height:1200px;"></div>
   <script type="text/javascript">
+
+    let blackStyle = [
+      "#343233",  // 背景和省份颜色
+      "#2be4f3",  // 省份边界线颜色
+      "#5aae5c",  // 点亮省份的颜色
+      "#fff",     // 标签字体的颜色
+      "#ffff00"   // 城市圆点的颜色
+    ];
+    let grayStyle = [
+      "#dedfde",
+      "#6e6e6d",
+      "#d5e5f1",
+      "#000",
+      "#fe7e3a",
+    ]
+
+    // 自由选择样式
+    let style = grayStyle;
+
+    document.getElementById("page").style.background = style[0];
     var myChart = echarts.init(document.getElementById('main'));
     myChart.showLoading();
     $.get('https://geo.datav.aliyun.com/areas_v3/bound/100000_full.json', function (geoJson) {
@@ -34,27 +54,27 @@
             itemStyle: {
               normal: {
                 borderWidth: 1,             // 省份边界线宽度
-                borderColor: "#2be4f3",     // 省份边界线颜色
-                areaColor: "#343233"        // 省份颜色
+                borderColor: style[1],     // 省份边界线颜色
+                areaColor: style[0]        // 省份颜色
               },
             },
             // 点亮的省份
             regions: [
-              { name: ["河北省"], itemStyle: { normal: { areaColor: "#5aae5c" }, }, },
-              { name: ["湖北省"], itemStyle: { normal: { areaColor: "#5aae5c" }, }, },
-              { name: ["吉林省"], itemStyle: { normal: { areaColor: "#5aae5c" }, }, },
-              { name: ["北京市"], itemStyle: { normal: { areaColor: "#5aae5c" }, }, },
-              { name: ["天津市"], itemStyle: { normal: { areaColor: "#5aae5c" }, }, },
-              { name: ["内蒙古自治区"], itemStyle: { normal: { areaColor: "#5aae5c" }, }, },
-              { name: ["陕西省"], itemStyle: { normal: { areaColor: "#5aae5c" }, }, },
-              { name: ["湖南省"], itemStyle: { normal: { areaColor: "#5aae5c" }, }, },
-              { name: ["江西省"], itemStyle: { normal: { areaColor: "#5aae5c" }, }, },
-              { name: ["安徽省"], itemStyle: { normal: { areaColor: "#5aae5c" }, }, },
-              { name: ["青海省"], itemStyle: { normal: { areaColor: "#5aae5c" }, }, },
-              { name: ["四川省"], itemStyle: { normal: { areaColor: "#5aae5c" }, }, },
-              { name: ["河南省"], itemStyle: { normal: { areaColor: "#5aae5c" }, }, },
-              { name: ["甘肃省"], itemStyle: { normal: { areaColor: "#5aae5c" }, }, },
-              { name: ["河北省"], itemStyle: { normal: { areaColor: "#5aae5c" }, }, },
+              { name: ["河北省"], itemStyle: { normal: { areaColor: style[2] }, }, },
+              { name: ["湖北省"], itemStyle: { normal: { areaColor: style[2] }, }, },
+              { name: ["吉林省"], itemStyle: { normal: { areaColor: style[2] }, }, },
+              { name: ["北京市"], itemStyle: { normal: { areaColor: style[2] }, }, },
+              { name: ["天津市"], itemStyle: { normal: { areaColor: style[2] }, }, },
+              { name: ["内蒙古自治区"], itemStyle: { normal: { areaColor: style[2] }, }, },
+              { name: ["陕西省"], itemStyle: { normal: { areaColor: style[2] }, }, },
+              { name: ["湖南省"], itemStyle: { normal: { areaColor: style[2] }, }, },
+              { name: ["江西省"], itemStyle: { normal: { areaColor: style[2] }, }, },
+              { name: ["安徽省"], itemStyle: { normal: { areaColor: style[2] }, }, },
+              { name: ["青海省"], itemStyle: { normal: { areaColor: style[2] }, }, },
+              { name: ["四川省"], itemStyle: { normal: { areaColor: style[2] }, }, },
+              { name: ["河南省"], itemStyle: { normal: { areaColor: style[2] }, }, },
+              { name: ["甘肃省"], itemStyle: { normal: { areaColor: style[2] }, }, },
+              { name: ["河北省"], itemStyle: { normal: { areaColor: style[2] }, }, },
             ],
           },
           series: {
@@ -80,32 +100,33 @@
               { name: '黄山', value: [118.1416, 30.2729] },
               { name: '洛阳', value: [112.46902, 34.68364] },
               { name: '敦煌', value: [94.66159, 40.14211] },
-              // { name: '黟县', value: [117.94137, 29.92588] },
-              { name: '西安\n 咸阳', value: [108.94866, 34.22245] },
+              { name: '', value: [117.94137, 29.92588] },    // 黟县 宏村
+              { name: '西安', value: [108.94866, 34.22245] },
               { name: '华山', value: [110.08752, 34.56608] },
               { name: '延安', value: [110.17196, 36.04732] },
               { name: '宝鸡', value: [107.90017, 34.37524] },
-              // { name: '咸阳', value: [108.705117, 34.333439] },
+              { name: '', value: [108.705117, 34.333439] },  // 咸阳
               { name: '九寨沟县', value: [104.231374, 33.279792] },
               { name: '茶卡镇', value: [98.48196, 36.93471] },
               { name: '张掖', value: [100.455472, 38.932897] },
               { name: '格尔木', value: [94.90329, 36.40236] },
               { name: '衡山', value: [112.86776, 27.23134] },
+              { name: '', value: [114.71, 41.15] },  // 张北
             ],
             symbolSize: 5,
             label: {
               formatter: '{b}',
               show: true,
               position: 'bottom',
-              color: '#fff', // 标签字体的颜色
+              color: style[3], // 标签字体的颜色
               fontSize: 10,
               fontWeight: 'bold',
               fontFamily: 'sans-serif'
             },
             itemStyle: {
-              color: "#ffff00", // 圆点的颜色
+              color: style[4], // 圆点的颜色
               borderWidth: 2, // 边框大小
-              borderColor: "#ffff00", // 圆点边框的样式
+              borderColor: style[4], // 圆点边框的样式
             }
           },
         }
