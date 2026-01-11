@@ -1,149 +1,323 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 
 <head>
   <meta charset="UTF-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>简约江湖足迹</title>
   <script src="https://cdn.jsdelivr.net/npm/echarts@5.3.1/dist/echarts.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #f5f5dc;
+      /* 米白色背景 */
+      font-family: 'KaiTi', serif;
+      overflow: hidden;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .container {
+      position: relative;
+      width: 95vw;
+      height: 90vh;
+      border-radius: 15px;
+      overflow: hidden;
+      background: #fffdf0;
+      /* 淡米色 */
+      box-shadow: 0 0 20px rgba(139, 69, 19, 0.2);
+      border: 1px solid #d2b48c;
+      /* 浅黄土色边框 */
+    }
+
+    .title-container {
+      position: absolute;
+      top: 50%;
+      left: 20px;
+      transform: translateY(-50%);
+      writing-mode: vertical-lr;
+      z-index: 10;
+      white-space: nowrap;
+    }
+
+    .title {
+      font-size: 2.5rem;
+      color: #8b4513;
+      /* 棕褐色 */
+      letter-spacing: 4px;
+      font-weight: 300;
+      font-family: 'LiSu', serif;
+    }
+
+    .stats-container {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      background: rgba(255, 253, 240, 0.9);
+      padding: 15px;
+      border-radius: 10px;
+      color: #8b4513;
+      font-size: 1.1rem;
+      border: 1px solid #d2b48c;
+    }
+
+    .controls {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      z-index: 10;
+    }
+
+    button {
+      background: #f5f5dc;
+      color: #8b4513;
+      border: 1px solid #d2b48c;
+      padding: 10px 20px;
+      margin-left: 10px;
+      border-radius: 25px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-family: 'KaiTi';
+      font-size: 1rem;
+    }
+
+    button:hover {
+      background: #e6d3a7;
+      transform: translateY(-2px);
+    }
+
+    #main {
+      width: 100%;
+      height: 100%;
+    }
+  </style>
 </head>
 
-<body id="page">
-  <!--style中定义视图的长宽尺寸-->
-  <div id="main" style="width: 2000px;height:1200px;"></div>
+<body>
+  <div class="container">
+    <div class="title-container">
+      <h1 class="title">江湖行踪</h1>
+    </div>
+
+    <div class="controls">
+      <button onclick="switchTheme()">水墨模式</button>
+    </div>
+
+    <div class="stats-container">
+      <div>行至: <span id="province-count">17</span> 州</div>
+      <div>行至: <span id="city-count">33</span> 镇</div>
+    </div>
+
+    <div id="main"></div>
+  </div>
+
   <script type="text/javascript">
+    let isInkStyle = false;
 
-    let blackStyle = [
-      "#343233",  // 背景和省份颜色
-      "#2be4f3",  // 省份边界线颜色
-      "#5aae5c",  // 点亮省份的颜色
-      "#fff",     // 标签字体的颜色
-      "#ffff00"   // 城市圆点的颜色
+    let warmStyle = [
+      "#f5f5dc",  // 背景
+      "#d2b48c",  // 边界线
+      "#f0e6d2",  // 已访问省份
+      "#8b4513",  // 字体
+      "#cd853f"   // 标记点
     ];
-    let grayStyle = [
-      "#dedfde",
-      "#6e6e6d",
-      "#d5e5f1",
-      "#000",
-      "#fe7e3a",
-    ]
 
-    // 自由选择样式
-    let style = grayStyle;
+    let inkStyle = [
+      "#ffffff",  // 背景
+      "#cccccc",  // 边界线
+      "#f5f5f5",  // 已访问省份
+      "#333333",  // 字体
+      "#666666"   // 标记点
+    ];
 
-    document.getElementById("page").style.background = style[0];
-    var myChart = echarts.init(document.getElementById('main'));
+    let currentStyle = warmStyle;
+
+    var myChart = echarts.init(document.getElementById('main'), null, {
+      renderer: 'canvas'
+    });
+
     myChart.showLoading();
+
     $.get('https://geo.datav.aliyun.com/areas_v3/bound/100000_full.json', function (geoJson) {
       myChart.hideLoading();
       echarts.registerMap('china', geoJson);
-      myChart.setOption(
-        option = {
-          title: {
-            text: '旅行足迹'
+
+      updateChart();
+    });
+
+    function updateChart() {
+      const option = {
+        backgroundColor: currentStyle[0],
+        title: {
+          text: '',
+          show: false
+        },
+        tooltip: {
+          trigger: 'item',
+          formatter: function (params) {
+            if (params.componentType === 'series') {
+              return `⚔️ ${params.name}`;
+            } else {
+              return params.name;
+            }
           },
-          geo: {
-            name: '旅行足迹',
-            type: 'map',
-            map: 'china',
-            selectedMode: 'multiple',
-            zoom: 1,
-            roam: true,
-            animation: false,
-            itemStyle: {
-              normal: {
-                borderWidth: 1,             // 省份边界线宽度
-                borderColor: style[1],     // 省份边界线颜色
-                areaColor: style[0]        // 省份颜色
-              },
+          backgroundColor: 'rgba(255, 253, 240, 0.9)',
+          borderColor: '#d2b48c',
+          textStyle: {
+            color: '#8b4513'
+          }
+        },
+        geo: {
+          name: '江湖行踪',
+          type: 'map',
+          map: 'china',
+          selectedMode: 'multiple',
+          zoom: 1.2,
+          roam: true,
+          itemStyle: {
+            normal: {
+              borderWidth: 1,
+              borderColor: currentStyle[1],
+              areaColor: '#fdfdfd', // 未访问区域接近白色
             },
-            // 点亮的省份
-            regions: [
-              { name: ["河北省"], itemStyle: { normal: { areaColor: style[2] }, }, },
-              { name: ["湖北省"], itemStyle: { normal: { areaColor: style[2] }, }, },
-              { name: ["吉林省"], itemStyle: { normal: { areaColor: style[2] }, }, },
-              { name: ["北京市"], itemStyle: { normal: { areaColor: style[2] }, }, },
-              { name: ["天津市"], itemStyle: { normal: { areaColor: style[2] }, }, },
-              { name: ["内蒙古自治区"], itemStyle: { normal: { areaColor: style[2] }, }, },
-              { name: ["陕西省"], itemStyle: { normal: { areaColor: style[2] }, }, },
-              { name: ["湖南省"], itemStyle: { normal: { areaColor: style[2] }, }, },
-              { name: ["江西省"], itemStyle: { normal: { areaColor: style[2] }, }, },
-              { name: ["安徽省"], itemStyle: { normal: { areaColor: style[2] }, }, },
-              { name: ["青海省"], itemStyle: { normal: { areaColor: style[2] }, }, },
-              { name: ["四川省"], itemStyle: { normal: { areaColor: style[2] }, }, },
-              { name: ["河南省"], itemStyle: { normal: { areaColor: style[2] }, }, },
-              { name: ["甘肃省"], itemStyle: { normal: { areaColor: style[2] }, }, },
-              { name: ["河北省"], itemStyle: { normal: { areaColor: style[2] }, }, },
-              { name: ["山西省"], itemStyle: { normal: { areaColor: style[2] }, }, },
-              { name: ["宁夏回族自治区"], itemStyle: { normal: { areaColor: style[2] }, }, },
-            ],
+            emphasis: {
+              areaColor: '#e6d3a7'
+            }
           },
-          series: {
-            name: '标记点',
+          regions: [
+            { name: "河北省", itemStyle: { areaColor: currentStyle[2] }, },
+            { name: "湖北省", itemStyle: { areaColor: currentStyle[2] }, },
+            { name: "吉林省", itemStyle: { areaColor: currentStyle[2] }, },
+            { name: "北京市", itemStyle: { areaColor: currentStyle[2] }, },
+            { name: "天津市", itemStyle: { areaColor: currentStyle[2] }, },
+            { name: "内蒙古自治区", itemStyle: { areaColor: currentStyle[2] }, },
+            { name: "陕西省", itemStyle: { areaColor: currentStyle[2] }, },
+            { name: "湖南省", itemStyle: { areaColor: currentStyle[2] }, },
+            { name: "江西省", itemStyle: { areaColor: currentStyle[2] }, },
+            { name: "安徽省", itemStyle: { areaColor: currentStyle[2] }, },
+            { name: "青海省", itemStyle: { areaColor: currentStyle[2] }, },
+            { name: "四川省", itemStyle: { areaColor: currentStyle[2] }, },
+            { name: "河南省", itemStyle: { areaColor: currentStyle[2] }, },
+            { name: "辽宁省", itemStyle: { areaColor: currentStyle[2] }, },
+            { name: "新疆维吾尔自治区", itemStyle: { areaColor: currentStyle[2] }, },
+            { name: "甘肃省", itemStyle: { areaColor: currentStyle[2] }, },
+            { name: "山西省", itemStyle: { areaColor: currentStyle[2] }, },
+            { name: "宁夏回族自治区", itemStyle: { areaColor: currentStyle[2] }, },
+            { name: ["重庆市"], itemStyle: { normal: { areaColor: currentStyle[2] }, }, },
+            { name: ["云南省"], itemStyle: { normal: { areaColor: currentStyle[2] }, }, },
+            { name: ["广东省"], itemStyle: { normal: { areaColor: currentStyle[2] }, }, },
+            { name: ["浙江省"], itemStyle: { normal: { areaColor: currentStyle[2] }, }, },
+          ],
+        },
+        series: [
+          {
+            name: '行迹',
             type: 'scatter',
             coordinateSystem: 'geo',
-            // 去过的城市，对应的经纬度
             data: [
-              { name: '北京', value: [116.407387, 39.904179] },
-              { name: '长白山', value: [128.333, 42.026] },
-              { name: '武当山', value: [110.785239, 32.647017] },
-              { name: '保定', value: [115.482331, 38.867657] },
-              { name: '唐山', value: [118.460379, 39.273070] },
-              { name: '天津', value: [117.190182, 39.125596] },
-              { name: '秦皇岛', value: [119.586579, 39.942531] },
-              { name: '乌兰布统', value: [117.54562, 43.26501] },
-              { name: '张家口', value: [115.27993, 40.97519] },
-              { name: '成都', value: [104.04303, 30.64235] },
-              { name: '西宁', value: [101.778916, 36.623178] },
-              { name: '长沙', value: [112.93133, 28.2351] },
-              { name: '南昌', value: [115.892151, 28.676493] },
-              { name: '武功山', value: [114.02951, 27.63063] },
-              { name: '黄山', value: [118.1416, 30.2729] },
-              { name: '洛阳', value: [112.46902, 34.68364] },
-              { name: '敦煌', value: [94.66159, 40.14211] },
-              { name: '', value: [117.94137, 29.92588] },    // 黟县 宏村
-              { name: '西安', value: [108.94866, 34.22245] },
-              { name: '华山', value: [110.08752, 34.56608] },
-              { name: '延安', value: [110.17196, 36.04732] },
-              { name: '宝鸡', value: [107.90017, 34.37524] },
-              { name: '', value: [108.705117, 34.333439] },  // 咸阳
-              { name: '九寨沟', value: [104.231374, 33.279792] },
-              { name: '茶卡镇', value: [98.48196, 36.93471] },
-              { name: '张掖', value: [100.455472, 38.932897] },
-              { name: '格尔木', value: [94.90329, 36.40236] },
-              { name: '衡山', value: [112.86776, 27.23134] },
-              { name: '', value: [114.71, 41.15] },  // 张北
-              { name: '婺源', value: [117.8619, 29.2479] },
-              { name: '银川', value: [106.278179, 38.46637] },
-              { name: '腾格里', value: [104.6, 38.52] },
-              { name: '五台山', value: [113.66, 39.04] },
+              { name: '京师', value: [116.407387, 39.904179], symbolSize: 14 },
+              { name: '长白山', value: [128.333, 42.026], symbolSize: 10 },
+              { name: '武当山', value: [110.785239, 32.647017], symbolSize: 10 },
+              { name: '保定府', value: [115.482331, 38.867657], symbolSize: 10 },
+              { name: '唐山', value: [118.460379, 39.273070], symbolSize: 10 },
+              { name: '津门', value: [117.190182, 39.125596], symbolSize: 12 },
+              { name: '秦皇岛', value: [119.586579, 39.942531], symbolSize: 10 },
+              { name: '乌兰布统', value: [117.54562, 43.26501], symbolSize: 10 },
+              { name: '张家口', value: [115.27993, 40.97519], symbolSize: 10 },
+              { name: '成都', value: [104.04303, 30.64235], symbolSize: 12 },
+              { name: '西宁', value: [101.778916, 36.623178], symbolSize: 10 },
+              { name: '长沙', value: [112.93133, 28.2351], symbolSize: 12 },
+              { name: '南昌', value: [115.892151, 28.676493], symbolSize: 10 },
+              { name: '武功山', value: [114.02951, 27.63063], symbolSize: 10 },
+              { name: '黄山', value: [118.1416, 30.2729], symbolSize: 10 },
+              { name: '洛阳', value: [112.46902, 34.68364], symbolSize: 10 },
+              { name: '敦煌', value: [94.66159, 40.14211], symbolSize: 10 },
+              { name: '宏村', value: [117.94137, 29.92588], symbolSize: 10 },
+              { name: '长安', value: [108.94866, 34.22245], symbolSize: 12 },
+              { name: '华山', value: [110.08752, 34.56608], symbolSize: 10 },
+              { name: '延安', value: [110.17196, 36.04732], symbolSize: 10 },
+              { name: '宝鸡', value: [107.90017, 34.37524], symbolSize: 10 },
+              { name: '咸阳', value: [108.705117, 34.333439], symbolSize: 10 },
+              { name: '九寨沟', value: [104.231374, 33.279792], symbolSize: 10 },
+              { name: '茶卡镇', value: [98.48196, 36.93471], symbolSize: 10 },
+              { name: '张掖', value: [100.455472, 38.932897], symbolSize: 10 },
+              { name: '格尔木', value: [94.90329, 36.40236], symbolSize: 10 },
+              { name: '衡山', value: [112.86776, 27.23134], symbolSize: 10 },
+              { name: '张北', value: [114.71, 41.15], symbolSize: 10 },
+              { name: '婺源', value: [117.8619, 29.2479], symbolSize: 10 },
+              { name: '银川', value: [106.278179, 38.46637], symbolSize: 10 },
+              { name: '腾格里', value: [104.6, 38.52], symbolSize: 10 },
+              { name: '五台山', value: [113.66, 39.04], symbolSize: 10 },
+              { name: '阿尔山', value: [119.9438, 47.177], symbolSize: 10 },
+              { name: '呼伦湖', value: [117.388, 48.9810], symbolSize: 10 },
+              { name: '呼伦贝尔', value: [119.7658, 49.2116], symbolSize: 10 },
+              { name: '满洲里', value: [117.511490, 49.601330], symbolSize: 10 },
+              { name: '室韦', value: [119.9354, 51.2007], symbolSize: 10 },
+              { name: '额尔古纳', value: [120.1796, 50.2431], symbolSize: 10 },
+              { name: '重庆', value: [106.5512, 29.5657], symbolSize: 10 },
+              { name: '雨崩', value: [98.8159, 28.3756], symbolSize: 10 },
+              { name: '丽江', value: [100.2271, 26.8565], symbolSize: 10 },
+              { name: '大连', value: [121.20, 38.46], symbolSize: 10 },
+              { name: '贡嘎', value: [101.88, 29.59], symbolSize: 10 },
+              { name: '喀纳斯', value: [87.02, 48.48], symbolSize: 10 },
+              { name: '禾木', value: [87.43, 48.56], symbolSize: 10 },
+              { name: '赛里木湖', value: [81.1333, 44.8333], symbolSize: 10 },
+              { name: '乌鲁木齐', value: [87.6168, 43.8256], symbolSize: 10 },
+              { name: '克拉玛依', value: [84.8897, 45.5854], symbolSize: 10 },
+              { name: '那拉提', value: [85.0139, 43.3167], symbolSize: 10 },
+              { name: '麦理浩径', value: [114.0139, 22.3167], symbolSize: 10 },
+              { name: '杭州', value: [120.19, 30.27], symbolSize: 8 },
             ],
-            symbolSize: 5,
+            symbol: 'circle',
+            symbolSize: function (val) {
+              return val[2] || 10;
+            },
             label: {
               formatter: '{b}',
               show: true,
-              position: 'bottom',
-              color: style[3], // 标签字体的颜色
-              fontSize: 12,
-              fontWeight: 'bold',
-              fontFamily: 'sans-serif'
+              position: 'top',
+              distance: 10,
+              color: currentStyle[3],
+              fontSize: 18,
+              fontFamily: 'KaiTi',
             },
             itemStyle: {
-              color: style[4], // 圆点的颜色
-              borderWidth: 2, // 边框大小
-              borderColor: style[4], // 圆点边框的样式
-            }
-          },
-        }
-      )
-    })
+              color: currentStyle[4],
+              borderWidth: 2,
+              borderColor: currentStyle[4],
+            },
+            zlevel: 1,
+          }
+        ],
+      };
+
+      myChart.setOption(option, true);
+    }
 
     myChart.on('click', function (params) {
-      // 在用户点击后控制台打印数据的名称
-      console.log(params);
+      if (params.componentType === 'series') {
+        alert(`⚔️ ${params.name}`);
+      }
     });
 
+    function switchTheme() {
+      isInkStyle = !isInkStyle;
+      currentStyle = isInkStyle ? inkStyle : warmStyle;
+      document.body.style.background = isInkStyle ? '#ffffff' : '#f5f5dc';
+      updateChart();
+    }
+
+    window.addEventListener('resize', function () {
+      myChart.resize();
+    });
   </script>
 </body>
 
